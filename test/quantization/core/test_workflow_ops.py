@@ -968,15 +968,14 @@ class TestFakeQuantizeOps(TestCase):
                 self.assertTrue(test_was_run)
 
 class TestFusedObsFakeQuant(TestCase):
-    @given(  # device=st.sampled_from(['cpu', 'cuda'] if torch.cuda.is_available() else ['cpu']),
-        symmetric_quant=st.booleans())
+    @given(device=st.sampled_from(['cpu', 'cuda'] if torch.cuda.is_available() else ['cpu']),
+           symmetric_quant=st.booleans())
     @settings(deadline=None)
-    def test_fused_obs_fake_quant_moving_avg(self, symmetric_quant) -> None:
+    def test_fused_obs_fake_quant_moving_avg(self, device, symmetric_quant) -> None:
         """
         Tests the case where we call the fused_obs_fake_quant op multiple times
         and update the running_min and max of the activation tensors.
         """
-        device = 'cpu'  # TODO add cuda in future PR
         in_running_min_ref = out_running_min_ref = float("inf")
         in_running_min_op = torch.tensor(float("inf"), device=device)
         in_running_max_ref = out_running_max_ref = float("-inf")
@@ -1112,8 +1111,9 @@ class TestFusedObsFakeQuant(TestCase):
             self.assertEqual(in_running_max_ref, in_running_max_op)
             torch.testing.assert_allclose(out, x_in)
 
-    def test_fused_obs_fake_quant_backward_op(self) -> None:
-        device = 'cpu'
+    @given(device=st.sampled_from(['cpu', 'cuda'] if torch.cuda.is_available() else ['cpu']),)
+    @settings(deadline=None)
+    def test_fused_obs_fake_quant_backward_op(self, device) -> None:
         n = m = k = 10
         input_shape = (m, n)
         output_shape = (m, n)
