@@ -273,7 +273,7 @@ class _ObserverBase(ObserverBase):
             zero_points: Zero points tensor of shape (#channels,)
         """
         if not check_min_max_valid(min_val, max_val):
-            return torch.tensor([1.0]), torch.tensor([0])
+            return torch.tensor([1.0]).to(min_val.device.type), torch.tensor([0]).to(min_val.device.type)
 
         quant_min, quant_max = self._calculate_qmin_qmax()
         min_val_neg = torch.min(min_val, torch.zeros_like(min_val))
@@ -1106,7 +1106,7 @@ class HistogramObserver(_ObserverBase):
                 "must run observer before calling calculate_qparams.\
                                     Returning default scale and zero point "
             )
-            return torch.tensor([1.0]), torch.tensor([0])
+            return torch.tensor([1.0]).to(self.min_val.device.type), torch.tensor([0]).to(self.min_val.device.type)
         assert self.bins == len(self.histogram), (
             "The number of bins in histogram should be equal to the number of bins "
             "supplied while making this observer"
@@ -1180,7 +1180,7 @@ class PlaceholderObserver(ObserverBase):
     """
 
     def __init__(
-        self, dtype=torch.float32, custom_op_name="", compute_dtype=None
+        self, dtype=torch.float32, custom_op_name="", compute_dtype=None, factory_kwargs=None,
     ) -> None:
         super(PlaceholderObserver, self).__init__(dtype=dtype)
         # dtype of input of the target operator, e.g. for dynamic quantization
@@ -1243,8 +1243,8 @@ class NoopObserver(ObserverBase):
                         (Can be used in Graph Mode Passes for special case ops).
     """
 
-    def __init__(self, dtype=torch.float16, custom_op_name="") -> None:
-        super(NoopObserver, self).__init__(dtype=dtype)
+    def __init__(self, dtype=torch.float16, custom_op_name="", factory_kwargs=None) -> None:
+        super(NoopObserver, self).__init__(dtype=dtype, factory_kwargs=factory_kwargs)
         self.dtype = dtype
         self.custom_op = custom_op_name
 
